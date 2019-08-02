@@ -7,7 +7,7 @@
 import tensorflow as tf
 import numpy as np
 
-def generator(input, shape=(7, 7, 128), is_training=True, drop_rate=0.7):
+def generator_layer(input, shape=(7, 7, 128), is_training=True, drop_rate=0.7):
     x = tf.keras.layers.Dense(units = np.prod(shape), activation=tf.nn.leaky_relu)(input)
     x = batch_norm(x, is_training)
     x = tf.reshape(x , shape=[-1] + list(shape))
@@ -17,7 +17,7 @@ def generator(input, shape=(7, 7, 128), is_training=True, drop_rate=0.7):
                                         activation = tf.nn.sigmoid)(x)
     return x
 
-def discriminator(input, drop_rate=0.7):
+def discriminator_layer(input, drop_rate=0.7):
     x = conv_with_bn(input, filters=64, drop_rate=drop_rate)
     x = conv_with_bn(x, filters=128, drop_rate=drop_rate)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
