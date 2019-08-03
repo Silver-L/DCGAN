@@ -7,20 +7,20 @@
 import os
 import tensorflow as tf
 import numpy as np
+import utils
 
 class DCGAN(object):
 
-    def __init__(self, sess, outdir, noise_dim, image_size, generator_layer, discriminator_layer, is_training=True,
+    def __init__(self, sess, noise_dim, image_size, generator_layer, discriminator_layer, is_training=True,
                  lr=1e-4):
 
         self._sess = sess
-        self._outdir = outdir
         self._noise_dim = noise_dim
         self._image_size = image_size
-        self._lr = lr
         self._is_training = is_training
         self._generator_layer = generator_layer
         self._discriminator_layer = discriminator_layer
+        self._lr = lr
 
         self._build_graph()
 
@@ -41,15 +41,18 @@ class DCGAN(object):
         self._d_fake = self.discriminator(image=self._gen_sample, reuse=True)
 
         # discriminator loss
-        self.d_loss_real = tf.reduce_mean(tf.keras.losses.binary_crossentropy(tf.ones_like(self._d_real), self._d_real))
-        self.d_loss_fake = tf.reduce_mean(tf.keras.losses.binary_crossentropy(tf.zeros_like(self._d_fake), self._d_fake))
-        self._d_loss = self.d_loss_fake + self.d_loss_real + 1e-6
+        self.d_loss_real = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(logits = self._d_real, labels = tf.ones_like(self._d_real)))
+        self.d_loss_fake = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(logits = self._d_fake, labels = tf.zeros_like(self._d_fake)))
+        self._d_loss = self.d_loss_fake + self.d_loss_real
 
         # generator loss
-        self._g_loss = tf.reduce_mean(tf.keras.losses.binary_crossentropy(tf.ones_like(self._d_fake), self._d_fake)) + 1e-6
+        self._g_loss = tf.reduce_mean(
+            tf.nn.sigmoid_cross_entropy_with_logits(logits = self._d_fake, labels = tf.ones_like(self._d_fake)))
 
         with tf.variable_scope('optimizer'):
-            optimizer = tf.train.AdamOptimizer(learning_rate=self._lr, beta1=0.5, beta2=0.9)
+            optimizer = tf.train.AdamOptimizer(learning_rate=self._lr, beta1=0.5, beta2=0.999)
 
         # parameters
         self.g_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='Generator')
@@ -84,8 +87,12 @@ class DCGAN(object):
                                    feed_dict={self._noise_input: noise, self._real_image_input: image})
         return d_loss
 
-    def save_model(self, index):
-        save = self.saver.save(self._sess, os.path.join(self._outdir, 'model' , 'model_{}'.format(index)))
+    def gen_san(self, noise):
+        sample = self._sess.run(self._gen_sample, feed_dict={self._noise_input: noise})
+        return sample
+
+    def save_model(self, path, index):
+        save = self.saver.save(self._sess, os.path.join(path, 'model' , 'model_{}'.format(index)))
         return save
 
     def restore_model(self, path):
