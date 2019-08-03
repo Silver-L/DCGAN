@@ -7,7 +7,6 @@
 import os
 import tensorflow as tf
 import numpy as np
-import utils
 
 class DCGAN(object):
 
@@ -87,7 +86,7 @@ class DCGAN(object):
                                    feed_dict={self._noise_input: noise, self._real_image_input: image})
         return d_loss
 
-    def gen_san(self, noise):
+    def gen_sample(self, noise):
         sample = self._sess.run(self._gen_sample, feed_dict={self._noise_input: noise})
         return sample
 

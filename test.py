@@ -57,7 +57,7 @@ def main(argv):
         Model.restore_model(os.path.join(FLAGS.indir,'model','model_{}'.format(FLAGS.model_index)))
 
         noise = np.random.uniform(-1., 1., size = [FLAGS.batch_size, FLAGS.noise_dim])
-        samples = Model.gen_san(noise)
+        samples = Model.gen_sample(noise)
 
         samples = samples[:, :, :, 0]
         m = utils.montage(samples)
